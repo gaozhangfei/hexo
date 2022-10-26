@@ -19,7 +19,7 @@ description: pkgconfig简单介绍
 # pkgconfig是什么
 
 应用程序动态加载库的时候需要指定库名-lxx, 在哪里找这个库-Lxx,以及头文件地址-Ixx
-pkgconfig就是库提供的配置文件，xx.pc
+pkgconfig就是库提供的描述性文件，xx.pc
 描述库的头文件地址，库被安装的路径，库的版本信息等．
 是库提供给使用者用的，库自身并不需要．
 
@@ -106,7 +106,7 @@ to the PKG_CONFIG_PATH environment variable
 No package 'libwd' found
 
 $ cd dpdk
-$ mkdir biuld
+$ mkdir build
 $ meson build
 =================
 Content Skipped
@@ -160,7 +160,7 @@ if HAVE_CRYPTO
 SUBDIRS += hisi_hpre_test
 endif
     ```
-    ./configure会判断系统中openssl版本是否在1.1.x, 相应设置flag HAVE_CRYPTO.
+    ./configure会判断系统中openssl版本是否是1.1.x, 相应设置flag HAVE_CRYPTO.
     Makefile.am会根据该flag决定是否编译该测试文件．
 
 4. pkgconfig 直接用在Makefile
@@ -193,14 +193,14 @@ test_hisi_hpre_LDADD+= $(libcrypto_LIBS)
 贴个范本
 ```
 $ vi lib/libwd_cyrpto.pc.in 
-prefix=/usr/local
-exec_prefix=${prefix}
-libdir=${exec_prefix}/lib
-includedir=${prefix}/include
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
 
 Name: UADK_libwd_crypto
 Description: UADK Crypto Algorithm library
-Version: 2.3.37
+Version: @VERSION@
 Libs: -L${libdir} -lwd_crypto
 Requires.private: libwd
 Cflags: -I${includedir}
@@ -213,11 +213,14 @@ nobase_pkginclude_HEADERS = v1/wd.h ...
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = lib/libwd_crypto.pc lib/libwd_comp.pc lib/libwd.pc
+CLEANFILES += $(pkgconfig_DATA)
 
 ```
 提供几个对外的库，则需要提供几个相应的pkgconfig xx.pc
 但并不是直接手动填写具体的信息，而是提供xx.pc.in, 从configure.ac里获取变量自动生成的．
 这样诸如prefix是可以根据用户的实际输入动态改变的．
+VERSION也是从configure.ac获取自动改变的,不需要每次都修改.
+
 说明几个变量
 Requires: xx是当期库的依赖库，用户程序也需要显示-lxx才能工作的，系统需要xx.pc
 Requires.private: xx是当前库的隐含依赖库，一般是当前仓库内部之间的依赖，系统需要xx.pc
@@ -234,6 +237,7 @@ pkginclude_HEADERS: /usr/local/include/uadk/xx.h
 nobase_pkginclude_HEADERS: /usr/local/include/uadk/v1/xx.h
 
 pkgconfigdir和pkgconfig_DATA是安装相应的xx.pc到指定pkg路径
+CLEANFILES是make clean删除生成的xx.pc
 
 
 个人笔记，错误欢迎指正．
